@@ -1,0 +1,116 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { validateCartridge } from '../scripts/validate-cartridge.mjs';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+async function makeFixture(meta, html) {
+  const dir = await mkdtemp(path.join(tmpdir(), 'rack-fixture-'));
+  await writeFile(path.join(dir, 'cartridge.json'), JSON.stringify(meta, null, 2));
+  await writeFile(path.join(dir, 'index.html'), html);
+  return dir;
+}
+
+const validMeta = {
+  id: 'fixture-card',
+  title: 'Fixture Card',
+  subtitle: 'A test cartridge.',
+  status: 'prototype',
+  entry: 'index.html',
+  aiAssisted: true,
+  credits: 'AI-assisted; directed and selected by aamemoho.',
+  published: true,
+  capabilities: []
+};
+
+test('the first real cartridge validates', async () => {
+  const result = await validateCartridge(path.join(root, 'incoming/crt-2026-0725-a'));
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.meta.id, 'crt-2026-0725-a');
+});
+
+test('missing required metadata is rejected', async () => {
+  const dir = await makeFixture({ ...validMeta, title: '' }, '<!doctype html><title>x</title>');
+  try {
+    const result = await validateCartridge(dir);
+    assert.ok(result.errors.some((e) => e.code === 'missing-field' && e.field === 'title'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('undeclared external network code is rejected', async () => {
+  const dir = await makeFixture(validMeta, '<!doctype html><script>fetch("https://example.com/x")</script>');
+  try {
+    const result = await validateCartridge(dir);
+    assert.ok(result.errors.some((e) => e.code === 'undeclared-network'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('undeclared network code in a linked local script is rejected', async () => {
+  const dir = await makeFixture(validMeta, '<!doctype html><script src="worker.js"></script>');
+  await writeFile(path.join(dir, 'worker.js'), 'fetch("https://example.com/x")');
+  try {
+    const result = await validateCartridge(dir);
+    assert.ok(result.errors.some((e) => e.code === 'undeclared-network'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('path traversal references are rejected', async () => {
+  const dir = await makeFixture(validMeta, '<!doctype html><script src="../secret.js"></script>');
+  try {
+    const result = await validateCartridge(dir);
+    assert.ok(result.errors.some((e) => e.code === 'path-escape'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('Cloudflare _headers uses valid route and header lines', async () => {
+  const text = await readFile(path.join(root, 'public/_headers'), 'utf8');
+  let inRoute = false;
+  for (const [index, line] of text.split('\n').entries()) {
+    if (!line.trim() || line.trimStart().startsWith('#')) continue;
+    if (!/^\s/.test(line)) {
+      assert.ok(line.startsWith('/'), `line ${index + 1}: route must start with /`);
+      inRoute = true;
+    } else {
+      assert.ok(inRoute, `line ${index + 1}: header before route`);
+      assert.match(line.trim(), /^[A-Za-z0-9-]+:\s*.+$/, `line ${index + 1}: malformed header`);
+    }
+  }
+});
+
+test('catalog contains the original works, media specimen, and GlowLog app', async () => {
+  const catalog = JSON.parse(await readFile(path.join(root, 'public/data/catalog.json'), 'utf8'));
+  assert.equal(catalog.items.length, 4);
+  assert.ok(catalog.items.some((item) => item.id === 'crt-2026-0725-a'));
+  assert.ok(catalog.items.some((item) => item.id === 'sphere'));
+  const media = catalog.items.find((item) => item.id === 'field-log-01');
+  assert.equal(media.kind, 'media');
+  assert.equal(media.href, '/media/field-log-01/');
+  assert.equal(media.poster, '/media/field-log-01/poster.webp');
+  const glowlog = catalog.items.find((item) => item.id === 'glowlog');
+  assert.equal(glowlog.kind, 'app');
+  assert.equal(glowlog.href, '/glowlog/');
+  assert.equal(catalog.items[0].id, 'crt-2026-0725-a');
+});
+
+test('status page and durable checkpoint share the same public checkpoint', async () => {
+  const html = await readFile(path.join(root, 'public/status/index.html'), 'utf8');
+  const script = await readFile(path.join(root, 'public/status/status.js'), 'utf8');
+  const checkpoint = await readFile('/opt/data/project-context/CURRENT_STATUS.md', 'utf8');
+  assert.match(html, /CHECKPOINT 2026-07-26-A/);
+  assert.match(checkpoint, /2026-07-26-A/);
+  assert.match(html, /id="copy-context"/);
+  assert.match(html, /id="context-plain"/);
+  assert.match(script, /navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(html, /\/opt\/data|147\.93\.81\.128|BEGIN PRIVATE KEY|API_KEY/);
+});
+
+test('rack links to status and status assets are not cached', async () => {
+  const index = await readFile(path.join(root, 'public/index.html'), 'utf8');
+  const headers = await readFile(path.join(root, 'public/_headers'), 'utf8');
+  assert.match(index, /href="\/status\/"/);
+  assert.match(headers, /\/status\/\*\n\s+Cache-Control: no-store/);
+});

@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "id": "sphere",
+      "kind": "external",
+      "title": "침식의 길",
+      "subtitle": "걷고, 흔적을 남기고, 다른 빛을 스친다.",
+      "status": "live",
+      "aiAssisted": true,
+      "credits": "AI-assisted development; direction and final selection by aamemoho.",
+      "accent": "#d8e8f0",
+      "order": 20,
+      "href": "https://sphere.aamemoho.com"
+    }
+  ]
+}

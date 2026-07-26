@@ -1,0 +1,19 @@
+{
+  "name": "aamemoho-cartridge-rack",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/glowlog"
+  ],
+  "scripts": {
+    "dev:glowlog": "npm --workspace @aamemoho/glowlog run dev",
+    "test": "node --test tests/rack.test.mjs",
+    "validate:first": "node scripts/validate-cartridge.mjs incoming/crt-2026-0725-a",
+    "ingest:first": "node scripts/ingest-cartridge.mjs incoming/crt-2026-0725-a",
+    "build:glowlog": "npm --workspace @aamemoho/glowlog run build",
+    "build:rack": "node scripts/build-dist.mjs",
+    "build": "npm run build:glowlog && npm run build:rack",
+    "check": "npm test && npm run build && node --test tests/build-output.test.mjs"
+  }
+}

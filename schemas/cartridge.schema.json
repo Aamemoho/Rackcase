@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "aamemoho cartridge",
+  "type": "object",
+  "required": ["id", "title", "subtitle", "status", "entry", "aiAssisted", "published"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "subtitle": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["prototype", "live", "archived", "private"] },
+    "entry": { "type": "string", "minLength": 1 },
+    "aiAssisted": { "type": "boolean" },
+    "credits": { "type": "string" },
+    "published": { "type": "boolean" },
+    "capabilities": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "vendorHashes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" } },
+    "accent": { "type": "string" },
+    "order": { "type": "number" }
+  },
+  "additionalProperties": true
+}
