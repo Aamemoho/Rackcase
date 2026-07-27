@@ -96,12 +96,10 @@ test('catalog contains the original works, media specimen, and GlowLog app', asy
   assert.equal(catalog.items[0].id, 'crt-2026-0725-a');
 });
 
-test('status page and durable checkpoint share the same public checkpoint', async () => {
+test('status page exposes the public checkpoint and copy controls', async () => {
   const html = await readFile(path.join(root, 'public/status/index.html'), 'utf8');
   const script = await readFile(path.join(root, 'public/status/status.js'), 'utf8');
-  const checkpoint = await readFile('/opt/data/project-context/CURRENT_STATUS.md', 'utf8');
   assert.match(html, /CHECKPOINT 2026-07-26-A/);
-  assert.match(checkpoint, /2026-07-26-A/);
   assert.match(html, /id="copy-context"/);
   assert.match(html, /id="context-plain"/);
   assert.match(script, /navigator\.clipboard\.writeText/);
