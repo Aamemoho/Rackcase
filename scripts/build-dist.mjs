@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = path.join(root, 'public');
-const glowlogSource = path.join(root, 'apps/glowlog/dist/index.html');
+const glowlogSource = path.join(root, 'apps/glowlog/dist');
 const target = process.env.RACK_DIST_DIR
   ? path.resolve(process.env.RACK_DIST_DIR)
   : path.join(root, 'dist');
@@ -13,8 +13,7 @@ const target = process.env.RACK_DIST_DIR
 await rm(target, { recursive: true, force: true });
 await mkdir(path.dirname(target), { recursive: true });
 await cp(source, target, { recursive: true });
-await mkdir(path.join(target, 'glowlog'), { recursive: true });
-await cp(glowlogSource, path.join(target, 'glowlog/index.html'));
+await cp(glowlogSource, path.join(target, 'glowlog'), { recursive: true });
 const catalog = await readFile(path.join(target, 'data/catalog.json'));
 const manifest = {
   builtAt: new Date().toISOString(),

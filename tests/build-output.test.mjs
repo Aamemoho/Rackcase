@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,20 +10,37 @@ async function text(relativePath) {
   return readFile(path.join(root, relativePath), 'utf8');
 }
 
+async function glowlogAssets() {
+  const directory = 'dist/glowlog/assets';
+  const names = await readdir(path.join(root, directory));
+  const jsName = names.find((name) => name.endsWith('.js'));
+  const cssName = names.find((name) => name.endsWith('.css'));
+  assert.ok(jsName, 'GlowLog JavaScript asset is missing');
+  assert.ok(cssName, 'GlowLog CSS asset is missing');
+  return {
+    jsName,
+    cssName,
+    js: await text(`${directory}/${jsName}`),
+  };
+}
+
 test('production build contains rack root and GlowLog route', async () => {
   const rack = await text('dist/index.html');
   const glowlog = await text('dist/glowlog/index.html');
+  const assets = await glowlogAssets();
 
   assert.match(rack, /aamemoho/i);
   assert.match(glowlog, /GlowLog/);
-  assert.match(glowlog, /glowlog:entries/);
-  assert.match(glowlog, /localStorage/);
-  assert.doesNotMatch(glowlog, /window\.storage/);
+  assert.match(assets.js, /glowlog:entries/);
+  assert.match(assets.js, /localStorage/);
+  assert.doesNotMatch(assets.js, /window\.storage/);
 });
 
-test('GlowLog is emitted as one self-contained HTML document', async () => {
+test('GlowLog uses same-origin hashed assets compatible with the rack CSP', async () => {
   const glowlog = await text('dist/glowlog/index.html');
-  assert.match(glowlog, /<style/i);
-  assert.match(glowlog, /<script[^>]*type="module"[^>]*>/i);
-  assert.doesNotMatch(glowlog, /<script[^>]+src=/i);
+  const assets = await glowlogAssets();
+
+  assert.match(glowlog, new RegExp(`src="\\./assets/${assets.jsName.replaceAll('.', '\\.')}`));
+  assert.match(glowlog, new RegExp(`href="\\./assets/${assets.cssName.replaceAll('.', '\\.')}`));
+  assert.doesNotMatch(glowlog, /<script[^>]*type="module"[^>]*>\s*[^<]/i);
 });

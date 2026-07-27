@@ -22,7 +22,7 @@ npm run check
 `npm run check`는 다음을 순서대로 실행합니다.
 
 1. 랙과 카트리지 테스트
-2. GlowLog 단일 HTML 빌드
+2. GlowLog의 CSP 호환 정적 자산 빌드
 3. 랙과 GlowLog를 `dist/`로 통합
 4. `/glowlog/` 배포 결과 검증
 
