@@ -81,9 +81,9 @@ test('Cloudflare _headers uses valid route and header lines', async () => {
   }
 });
 
-test('catalog contains the original works, media specimen, and GlowLog app', async () => {
+test('catalog preserves the original works and includes Wave Striker', async () => {
   const catalog = JSON.parse(await readFile(path.join(root, 'public/data/catalog.json'), 'utf8'));
-  assert.equal(catalog.items.length, 4);
+  assert.equal(catalog.items.length, 5);
   assert.ok(catalog.items.some((item) => item.id === 'crt-2026-0725-a'));
   assert.ok(catalog.items.some((item) => item.id === 'sphere'));
   const media = catalog.items.find((item) => item.id === 'field-log-01');
@@ -93,7 +93,12 @@ test('catalog contains the original works, media specimen, and GlowLog app', asy
   const glowlog = catalog.items.find((item) => item.id === 'glowlog');
   assert.equal(glowlog.kind, 'app');
   assert.equal(glowlog.href, '/glowlog/');
+  const wave = catalog.items.find((item) => item.id === 'wave-striker-chain-rush');
+  assert.equal(wave.kind, 'cartridge');
+  assert.equal(wave.entry, '/cartridges/wave-striker-chain-rush/index.html');
+  assert.equal(wave.href, '/play.html?id=wave-striker-chain-rush');
   assert.equal(catalog.items[0].id, 'crt-2026-0725-a');
+  assert.equal(catalog.items[4].id, 'wave-striker-chain-rush');
 });
 
 test('status page exposes the public checkpoint and copy controls', async () => {

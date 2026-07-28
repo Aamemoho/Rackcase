@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-26T00:00:16Z",
+  "generatedAt": "2026-07-28T11:03:16.627Z",
   "items": [
     {
       "id": "crt-2026-0725-a",
@@ -51,6 +51,19 @@
       "accent": "#f0a24a",
       "order": 40,
       "href": "/glowlog/"
+    },
+    {
+      "id": "wave-striker-chain-rush",
+      "kind": "cartridge",
+      "title": "Wave Striker — Chain Rush",
+      "subtitle": "충격파를 쏘고, 분홍 젬의 2차 파동으로 연쇄를 번지게 한다.",
+      "status": "prototype",
+      "aiAssisted": true,
+      "credits": "AI 생성 도구를 활용해 제작했습니다. 콘셉트·연출·선별: aamemoho.",
+      "accent": "#5ce1ff",
+      "order": 50,
+      "entry": "/cartridges/wave-striker-chain-rush/index.html",
+      "href": "/play.html?id=wave-striker-chain-rush"
     }
   ]
 }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>3D Wave Striker — Chain Rush</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="crosshair"></div>
+
+  <div id="score-board" class="hud">
+    <div class="label">Score</div>
+    <div id="score" class="big">0</div>
+  </div>
+
+  <div id="time-box" class="hud">
+    <div class="label">Time</div>
+    <div id="time" class="big">60</div>
+  </div>
+
+  <div id="combo-box" class="hud">
+    <div class="label">Combo</div>
+    <div id="combo" class="big">x1</div>
+    <div id="combo-bar"><div id="combo-fill"></div></div>
+  </div>
+
+  <div id="energy-box" class="hud">
+    <div class="label">Charge</div>
+    <div id="pips"><i><span></span></i><i><span></span></i><i><span></span></i></div>
+    <div id="hint">분홍 젬은 터지면서 2차 충격파를 낳는다 — 연쇄를 노려라</div>
+  </div>
+
+  <div id="over">
+    <div class="t">TIME UP</div>
+    <div id="final">0</div>
+    <div id="best">BEST 0</div>
+    <div id="again">클릭해서 다시 시작</div>
+  </div>
+<script defer src="./game.js"></script>
+</body>
+</html>
