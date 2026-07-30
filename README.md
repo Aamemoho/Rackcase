@@ -57,6 +57,10 @@ npm run check
 
 GlowLog 기록은 현재 사용자의 브라우저 `localStorage`에만 저장되며 서버나 GitHub로 전송되지 않습니다.
 
+Photogenesis는 외부 API·계정·분석 도구 없이 실행됩니다. Three.js r128은 저장소 내부에 고정하고 MIT 원문과 SHA-256을 보존했습니다. 출처와 라이선스를 정확히 복구하지 못한 MP3 음원은 공개판에서 제외하고 Web Audio 합성 셔터로 대체했습니다.
+
+프로젝트 고유 자료의 재사용 조건은 [COPYRIGHT.md](./COPYRIGHT.md), 제3자 구성요소는 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)를 확인하십시오.
+
 ## GitHub → Cloudflare Pages
 
 GitHub 저장소에 연결한 뒤 Cloudflare Pages의 빌드 설정을 다음처럼 둡니다.
@@ -81,8 +85,9 @@ git push
 ## 공개 경로
 
 ```text
-/                      카트리지 랙
-/glowlog/              GlowLog
+/                           카트리지 랙
+/play.html?id=photogenesis  Photogenesis 실행
+/glowlog/                   GlowLog
 /status/               Cloudflare Access로 보호할 체크포인트
 /media/field-log-01/   미디어 카트리지
 ```

@@ -1,0 +1,16 @@
+{
+  "id": "photogenesis",
+  "title": "포토제네시스",
+  "subtitle": "사진으로 후보 세계를 노출하고, 인화해 현실로 고정한다.",
+  "status": "prototype",
+  "entry": "index.html",
+  "aiAssisted": true,
+  "credits": "AI 보조 개발 · 콘셉트, 연출, 선별, 편집: aamemoho. Three.js r128: MIT License.",
+  "published": true,
+  "capabilities": [],
+  "vendorHashes": {
+    "vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
+  },
+  "accent": "#8b7cf6",
+  "order": 60
+}

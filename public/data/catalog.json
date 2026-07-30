@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-28T11:03:16.627Z",
+  "generatedAt": "2026-07-30T09:49:57.243Z",
   "items": [
     {
       "id": "crt-2026-0725-a",
@@ -64,6 +64,19 @@
       "order": 50,
       "entry": "/cartridges/wave-striker-chain-rush/index.html",
       "href": "/play.html?id=wave-striker-chain-rush"
+    },
+    {
+      "id": "photogenesis",
+      "kind": "cartridge",
+      "title": "포토제네시스",
+      "subtitle": "사진으로 후보 세계를 노출하고, 인화해 현실로 고정한다.",
+      "status": "prototype",
+      "aiAssisted": true,
+      "credits": "AI 보조 개발 · 콘셉트, 연출, 선별, 편집: aamemoho. Three.js r128: MIT License.",
+      "accent": "#8b7cf6",
+      "order": 60,
+      "entry": "/cartridges/photogenesis/index.html",
+      "href": "/play.html?id=photogenesis"
     }
   ]
 }

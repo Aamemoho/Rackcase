@@ -44,3 +44,15 @@ test('GlowLog uses same-origin hashed assets compatible with the rack CSP', asyn
   assert.match(glowlog, new RegExp(`href="\\./assets/${assets.cssName.replaceAll('.', '\\.')}`));
   assert.doesNotMatch(glowlog, /<script[^>]*type="module"[^>]*>\s*[^<]/i);
 });
+
+test('production build contains a self-contained Photogenesis cartridge', async () => {
+  const catalog = JSON.parse(await text('dist/data/catalog.json'));
+  const html = await text('dist/cartridges/photogenesis/index.html');
+  const game = await text('dist/cartridges/photogenesis/game.js');
+  const vendor = await text('dist/cartridges/photogenesis/vendor/three.min.js');
+  assert.ok(catalog.items.some((item) => item.id === 'photogenesis'));
+  assert.match(html, /\.\/vendor\/three\.min\.js/);
+  assert.doesNotMatch(html + game, /https?:\/\//);
+  assert.doesNotMatch(html + game, /\.mp3\b/);
+  assert.match(vendor, /SPDX-License-Identifier: MIT/);
+});

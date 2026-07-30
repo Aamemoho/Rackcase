@@ -81,9 +81,9 @@ test('Cloudflare _headers uses valid route and header lines', async () => {
   }
 });
 
-test('catalog preserves the original works and includes Wave Striker', async () => {
+test('catalog preserves the original works and includes Wave Striker and Photogenesis', async () => {
   const catalog = JSON.parse(await readFile(path.join(root, 'public/data/catalog.json'), 'utf8'));
-  assert.equal(catalog.items.length, 5);
+  assert.equal(catalog.items.length, 6);
   assert.ok(catalog.items.some((item) => item.id === 'crt-2026-0725-a'));
   assert.ok(catalog.items.some((item) => item.id === 'sphere'));
   const media = catalog.items.find((item) => item.id === 'field-log-01');
@@ -97,8 +97,30 @@ test('catalog preserves the original works and includes Wave Striker', async () 
   assert.equal(wave.kind, 'cartridge');
   assert.equal(wave.entry, '/cartridges/wave-striker-chain-rush/index.html');
   assert.equal(wave.href, '/play.html?id=wave-striker-chain-rush');
+  const photogenesis = catalog.items.find((item) => item.id === 'photogenesis');
+  assert.equal(photogenesis.kind, 'cartridge');
+  assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html');
+  assert.equal(photogenesis.href, '/play.html?id=photogenesis');
+  assert.equal(photogenesis.aiAssisted, true);
   assert.equal(catalog.items[0].id, 'crt-2026-0725-a');
   assert.equal(catalog.items[4].id, 'wave-striker-chain-rush');
+  assert.equal(catalog.items[5].id, 'photogenesis');
+});
+
+test('Photogenesis is self-contained and excludes rights-unclear recordings', async () => {
+  const base = path.join(root, 'public/cartridges/photogenesis');
+  const html = await readFile(path.join(base, 'index.html'), 'utf8');
+  const game = await readFile(path.join(base, 'game.js'), 'utf8');
+  const credits = await readFile(path.join(base, 'CREDITS.md'), 'utf8');
+  const license = await readFile(path.join(base, 'LICENSES/THREE-LICENSE.txt'), 'utf8');
+  assert.match(html, /src="\.\/vendor\/three\.min\.js"/);
+  assert.match(html, /src="\.\/game\.js"/);
+  assert.doesNotMatch(html + game, /https?:\/\//);
+  assert.doesNotMatch(html + game, /\.mp3\b/);
+  assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/i);
+  assert.match(game, /createOscillator/);
+  assert.match(credits, /exact creator, source URL, and license could not be recovered/i);
+  assert.match(license, /MIT License/);
 });
 
 test('status page exposes the public checkpoint and copy controls', async () => {
