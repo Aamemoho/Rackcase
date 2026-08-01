@@ -663,9 +663,6 @@ function startAwaken(){
 }
 gameStartEl.addEventListener('click',startAwaken);
 gameStartEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();startAwaken();}});
-addEventListener('pointerdown',()=>{
-  if(gameStarted&&!gameReady&&awakenEl.style.display==='block')openEyes();
-});
 addEventListener('message',ev=>{
   if(ev.source===window.parent&&ev.data&&ev.data.type==='aamemoho:photogenesis-start')startAwaken();
 });
