@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -99,7 +99,7 @@ test('catalog preserves the original works and includes Wave Striker and Photoge
   assert.equal(wave.href, '/play.html?id=wave-striker-chain-rush');
   const photogenesis = catalog.items.find((item) => item.id === 'photogenesis');
   assert.equal(photogenesis.kind, 'cartridge');
-  assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html?v=20260801-continuity');
+  assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html?v=20260801-afterimage');
   assert.equal(photogenesis.href, '/play.html?id=photogenesis');
   assert.equal(photogenesis.aiAssisted, true);
   assert.equal(photogenesis.presentation.mode, 'immersive-landscape');
@@ -109,7 +109,7 @@ test('catalog preserves the original works and includes Wave Striker and Photoge
   assert.equal(catalog.items[5].id, 'photogenesis');
 });
 
-test('Photogenesis is self-contained and excludes rights-unclear recordings', async () => {
+test('Photogenesis is self-contained and preserves the supplied afterimage opening and shutter takes', async () => {
   const base = path.join(root, 'public/cartridges/photogenesis');
   const html = await readFile(path.join(base, 'index.html'), 'utf8');
   const game = await readFile(path.join(base, 'game.js'), 'utf8');
@@ -118,22 +118,44 @@ test('Photogenesis is self-contained and excludes rights-unclear recordings', as
   const styles = await readFile(path.join(base, 'styles.css'), 'utf8');
   const credits = await readFile(path.join(base, 'CREDITS.md'), 'utf8');
   const license = await readFile(path.join(base, 'LICENSES/THREE-LICENSE.txt'), 'utf8');
+  const audio = await readdir(path.join(base, 'audio'));
   assert.match(html, /src="\.\/vendor\/three\.min\.js"/);
-  assert.match(html, /styles\.css\?v=20260801-landscape/);
-  assert.match(html, /src="\.\/game\.js\?v=20260801-continuity"/);
+  assert.match(html, /styles\.css\?v=20260801-afterimage/);
+  assert.match(html, /src="\.\/game\.js\?v=20260801-afterimage"/);
+  assert.match(html, /id="gameStart"/);
+  assert.match(html, /id="awaken"/);
   assert.doesNotMatch(html + game, /https?:\/\//);
-  assert.doesNotMatch(html + game, /\.mp3\b/);
+  assert.deepEqual(audio.sort(), [
+    'breath.mp3',
+    'shutter_take_01.mp3',
+    'shutter_take_02.mp3',
+    'shutter_take_03.mp3',
+    'shutter_take_04.mp3',
+    'shutter_take_05.mp3',
+    'shutter_take_06.mp3',
+    'shutter_take_07.mp3'
+  ]);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/i);
   assert.match(game, /createOscillator/);
   assert.match(game, /function shutterBlink\(\)/);
+  assert.match(game, /function startAwaken\(\)/);
+  assert.match(game, /\},1050\);/);
+  assert.match(game, /setTimeout\(openEyes,3550\)/);
+  assert.match(game, /captureAt:0\.97,releaseAt:1\.30/);
+  assert.match(game, /aamemoho:photogenesis-start/);
+  assert.match(game, /aamemoho:intro-status/);
+  assert.match(game, /shutter_take_07\.mp3/);
   assert.match(game, /photogenesis-0f1-save-v1/);
   assert.match(player, /aamemoho:save-write/);
+  assert.match(player, /sendCartridgeStart/);
   assert.match(player, /hasEnteredFullscreen/);
   assert.match(player, /가로 전체화면으로 다시 시작/);
   assert.match(player, /fullscreenchange/);
   assert.doesNotMatch(playerHtml, /allow-same-origin/);
+  assert.match(playerHtml, /allow="autoplay; fullscreen"/);
   assert.match(styles, /이동 영역/);
-  assert.match(credits, /exact creator, source URL, and license could not be recovered/i);
+  assert.match(styles, /#awaken\.open \.lid\.top/);
+  assert.match(credits, /e199831cfc09e42c9058597e94bca4bc3f4a2c474f264cf2e34f1c92b9265102/);
   assert.match(license, /MIT License/);
 });
 

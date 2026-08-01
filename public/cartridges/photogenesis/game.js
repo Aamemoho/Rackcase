@@ -564,19 +564,21 @@ function pushVeil(now){
     showSub('이 너머는 아직 확정되지 않았다');}
 }
 
-// ---------- 오디오 (공개 안전판) ----------
+// ---------- 오디오 (Breathe v0.7.9a 기증본) ----------
 /*
-  원본 프로토타입의 외부 MP3는 정확한 제작자·원본 URL·라이선스를
-  복구하지 못해 공개 배포에서 제외했다. 셔터음은 Web Audio로 로컬 합성하며,
-  호흡은 시각 효과만 유지한다. 네트워크 요청이나 사용자 녹음은 사용하지 않는다.
+  프로젝트 소유자가 다시 제공한 Breathe v0.7.9a 기증 ZIP에서 눈뜸 숨소리와
+  Minolta XE-7 셔터 take 7종을 이식했다. MP3 재생이 거부되면 Web Audio 합성음으로 폴백한다.
 */
 const SHUTTER_TAKES=[
-  {captureAt:0.18,releaseAt:0.42},
-  {captureAt:0.22,releaseAt:0.48},
-  {captureAt:0.16,releaseAt:0.40},
-  {captureAt:0.20,releaseAt:0.45}
+  {src:'./audio/shutter_take_01.mp3',captureAt:0.97,releaseAt:1.30},
+  {src:'./audio/shutter_take_02.mp3',captureAt:1.90,releaseAt:2.22},
+  {src:'./audio/shutter_take_03.mp3',captureAt:0.75,releaseAt:2.30},
+  {src:'./audio/shutter_take_04.mp3',captureAt:1.17,releaseAt:1.46},
+  {src:'./audio/shutter_take_05.mp3',captureAt:0.70,releaseAt:2.20},
+  {src:'./audio/shutter_take_06.mp3',captureAt:0.94,releaseAt:2.66},
+  {src:'./audio/shutter_take_07.mp3',captureAt:0.82,releaseAt:1.06}
 ];
-let actx=null,audioPrimed=false;
+let actx=null,audioPrimed=false,shutterAudios=[],awakenBreath=null;
 function getAudioContext(){
   try{
     actx=actx||new (window.AudioContext||window.webkitAudioContext)();
@@ -584,7 +586,13 @@ function getAudioContext(){
     return actx;
   }catch(e){return null}
 }
-function primeAudio(){if(audioPrimed)return;audioPrimed=true;getAudioContext();}
+function primeCameraAudio(){
+  try{
+    if(!shutterAudios.length)shutterAudios=SHUTTER_TAKES.map(t=>{const a=new Audio(t.src);a.preload='auto';a.volume=.82;return a;});
+    awakenBreath=awakenBreath||new Audio('./audio/breath.mp3');awakenBreath.preload='auto';awakenBreath.volume=.70;
+  }catch(e){}
+}
+function primeAudio(){if(audioPrimed)return;audioPrimed=true;getAudioContext();primeCameraAudio();}
 addEventListener('pointerdown',primeAudio,{once:true});
 addEventListener('touchstart',primeAudio,{once:true});
 addEventListener('keydown',primeAudio,{once:true});
@@ -597,7 +605,7 @@ function clickBurst(ctx,at,duration,gainValue,highpass){
   gain.gain.setValueAtTime(gainValue,at);gain.gain.exponentialRampToValueAtTime(0.0001,at+duration);
   source.connect(filter).connect(gain).connect(ctx.destination);source.start(at);source.stop(at+duration);
 }
-function playShutterTake(take){
+function playSyntheticShutterTake(take){
   const ctx=getAudioContext();if(!ctx)return;
   const t=ctx.currentTime+0.015;
   const motor=ctx.createOscillator(),motorGain=ctx.createGain();
@@ -608,11 +616,60 @@ function playShutterTake(take){
   clickBurst(ctx,t+take.captureAt,0.052,0.16,1100);
   clickBurst(ctx,t+take.releaseAt,0.035,0.075,760);
 }
-function playIdleBreath(){/* 권리 미확인 음성 대신 시각적 입김만 유지 */}
+function playShutterTake(take){
+  try{
+    if(!shutterAudios.length)primeCameraAudio();
+    const base=shutterAudios[take.idx],a=base?base.cloneNode():new Audio(take.src);
+    a.volume=.82;const p=a.play();if(p&&p.catch)p.catch(()=>playSyntheticShutterTake(take));
+  }catch(e){playSyntheticShutterTake(take);}
+}
+function playAwakenBreath(){
+  try{
+    primeCameraAudio();const a=awakenBreath.cloneNode();a.volume=.70;
+    const p=a.play();if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+}
+function playIdleBreath(){/* 시작 숨 외의 반복 호흡은 Photogenesis에서 사용하지 않는다 */}
 function shutterBlink(){
   const f=document.getElementById('shuttercurtain');if(!f)return;
   f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
 }
+
+// ---------- 시작: 감은 눈 → 입김 → 백광 → 눈뜸 ----------
+const gameStartEl=document.getElementById('gameStart'),awakenEl=document.getElementById('awaken');
+let gameStarted=false,gameReady=false,awakenTimer=0;
+function openEyes(){
+  if(!gameStarted||gameReady)return;
+  gameReady=true;clearTimeout(awakenTimer);
+  if(window.parent!==window)window.parent.postMessage({type:'aamemoho:intro-status',cartridge:'photogenesis',status:'ready'},'*');
+  const f=awakenEl.querySelector('.awFlash');
+  f.style.transition='none';f.style.opacity='.9';void f.offsetWidth;
+  f.style.transition='opacity 1.5s ease-out';f.style.opacity='0';
+  awakenEl.classList.add('open');
+  setTimeout(()=>{
+    awakenEl.style.display='none';awakenEl.classList.remove('open');awakenEl.setAttribute('aria-hidden','true');
+    awakenEl.querySelector('.puff').classList.remove('go');
+  },1800);
+}
+function startAwaken(){
+  if(gameStarted)return;
+  gameStarted=true;primeAudio();gameStartEl.classList.add('hidden');
+  if(window.parent!==window)window.parent.postMessage({type:'aamemoho:intro-status',cartridge:'photogenesis',status:'started'},'*');
+  awakenEl.style.display='block';awakenEl.setAttribute('aria-hidden','false');
+  setTimeout(()=>{
+    if(!gameReady){playAwakenBreath();awakenEl.querySelector('.puff').classList.add('go');}
+  },1050);
+  awakenTimer=setTimeout(openEyes,3550);
+}
+gameStartEl.addEventListener('click',startAwaken);
+gameStartEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();startAwaken();}});
+addEventListener('pointerdown',()=>{
+  if(gameStarted&&!gameReady&&awakenEl.style.display==='block')openEyes();
+});
+addEventListener('message',ev=>{
+  if(ev.source===window.parent&&ev.data&&ev.data.type==='aamemoho:photogenesis-start')startAwaken();
+});
+if(window.parent!==window)window.parent.postMessage({type:'aamemoho:cartridge-ready',cartridge:'photogenesis'},'*');
 
 // ---------- 카메라 모드 ----------
 const vf=document.getElementById('vf'),grainEl=document.getElementById('grain'),
@@ -1227,6 +1284,7 @@ let last=performance.now(),firstEnter=true,firstSpecNear=true;
 function loop(now){
   requestAnimationFrame(loop);
   const dt=Math.min((now-last)/1000,0.05);last=now;
+  if(!gameReady){renderer.render(scene,camera);return;}
 
   // 이동
   let mx=0,mz=0,blocked=false;

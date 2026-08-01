@@ -9,6 +9,40 @@
   body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;
        color:var(--ink);letter-spacing:.02em;user-select:none;-webkit-user-select:none}
   canvas{display:block}
+
+  /* Breathe v0.7.9a 기증본에서 이식한 시작/눈뜸 시퀀스 */
+  #gameStart{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:13px;background:#020304;color:#e9f3f8;text-align:center;cursor:pointer;
+    touch-action:manipulation;letter-spacing:.08em}
+  #gameStart.hidden{display:none}
+  #gameStart .startEyebrow{font-size:10px;letter-spacing:.32em;color:#8da0aa}
+  #gameStart .startTitle{font-size:clamp(25px,6vw,48px);font-weight:650;letter-spacing:.12em}
+  #gameStart .startGo{margin-top:14px;font-size:12px;color:#c9d6dc;animation:startPulse 2.4s ease-in-out infinite}
+  @keyframes startPulse{50%{opacity:.42}}
+  #awaken{position:fixed;inset:0;z-index:89;display:none;pointer-events:none;overflow:hidden}
+  #awaken .lid{position:absolute;left:0;right:0;height:50.6%;background:#000;z-index:3;
+    transition:transform 1.6s cubic-bezier(.55,0,.15,1)}
+  #awaken .lid.top{top:0}
+  #awaken .lid.bot{bottom:0}
+  #awaken.open .lid.top{transform:translateY(-102%)}
+  #awaken.open .lid.bot{transform:translateY(102%)}
+  #awaken .puff{position:absolute;left:50%;top:62%;width:200px;height:130px;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(232,242,248,.6),rgba(232,242,248,.18) 55%,rgba(232,242,248,0));
+    filter:blur(10px);opacity:0;transform:translate(-50%,-50%) scale(.3);z-index:4}
+  #awaken .puff.go{animation:awBreath 3.4s ease-out forwards}
+  @keyframes awBreath{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}
+    14%{opacity:.9}
+    55%{opacity:.5}
+    100%{opacity:0;transform:translate(-52%,-150%) scale(1.9)}
+  }
+  #awaken .awFlash{position:absolute;inset:0;background:#eef4f8;opacity:0;z-index:2}
+  @media (prefers-reduced-motion:reduce){
+    #gameStart .startGo{animation:none}
+    #awaken .lid{transition-duration:.3s}
+    #awaken .puff.go{animation-duration:.6s}
+  }
+
   .hud{position:fixed;z-index:10;pointer-events:none}
   .label{font-size:11px;color:var(--ink-dim);letter-spacing:.14em;text-transform:uppercase}
 

@@ -4,9 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>포토제네시스 · 프로토타입 0f.1 관측소 지도 핀</title>
-<link rel="stylesheet" href="./styles.css?v=20260801-landscape">
+<link rel="stylesheet" href="./styles.css?v=20260801-afterimage">
 </head>
 <body>
+<div id="gameStart" role="button" tabindex="0" aria-label="게임 시작">
+  <div class="startEyebrow">PHOTOGENESIS · FIELD EXPOSURE</div>
+  <div class="startTitle">포토제네시스</div>
+  <div class="startGo">화면을 누르면, 눈을 뜹니다 ▸</div>
+</div>
+<div id="awaken" aria-hidden="true">
+  <div class="awFlash"></div>
+  <div class="lid top"></div>
+  <div class="lid bot"></div>
+  <div class="puff"></div>
+</div>
 <div class="hud" id="nameTag"></div>
 <div class="hud" id="hint">클릭: 시점 고정 · WASD 이동 · C 카메라 · 스페이스 셔터 · E 확인 · M 지도</div>
 <div class="hud" id="queueBox"></div>
@@ -63,6 +74,6 @@
 </div>
 
 <script defer src="./vendor/three.min.js"></script>
-<script defer src="./game.js?v=20260801-continuity"></script>
+<script defer src="./game.js?v=20260801-afterimage"></script>
 </body>
 </html>

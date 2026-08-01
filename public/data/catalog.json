@@ -72,14 +72,14 @@
       "subtitle": "사진으로 후보 세계를 노출하고, 인화해 현실로 고정한다.",
       "status": "prototype",
       "aiAssisted": true,
-      "credits": "AI 보조 개발 · 콘셉트, 연출, 선별, 편집: aamemoho. Three.js r128: MIT License.",
+      "credits": "AI 보조 개발 · 콘셉트, 연출, 선별, 편집: aamemoho · 시작 숨/Minolta XE-7 셔터: 프로젝트 소유자 제공 Breathe v0.7.9a 기증본 · Three.js r128: MIT License.",
       "presentation": {
         "mode": "immersive-landscape",
         "orientation": "landscape"
       },
       "accent": "#8b7cf6",
       "order": 60,
-      "entry": "/cartridges/photogenesis/index.html?v=20260801-continuity",
+      "entry": "/cartridges/photogenesis/index.html?v=20260801-afterimage",
       "href": "/play.html?id=photogenesis"
     }
   ]

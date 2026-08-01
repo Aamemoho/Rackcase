@@ -17,6 +17,7 @@ let immersiveLandscape = false;
 let started = false;
 let hasEnteredFullscreen = false;
 let currentItemId = null;
+let launchGestureUsed = false;
 
 function fail(text) {
   message.hidden = false;
@@ -90,10 +91,13 @@ async function requestImmersiveMode() {
 }
 
 async function startImmersive() {
+  launchGestureUsed = true;
   started = true;
   document.body.classList.add('started');
   launch.hidden = true;
-  await requestImmersiveMode();
+  const immersiveRequest = requestImmersiveMode();
+  sendCartridgeStart();
+  await immersiveRequest;
   updateLaunchGate();
   updateOrientationGate();
   updateFullscreenControl();
@@ -125,9 +129,22 @@ function sendSaveReply(type, body = {}) {
   frame.contentWindow.postMessage({ type, ...body }, '*');
 }
 
+function sendCartridgeStart() {
+  if (currentItemId !== 'photogenesis' || !frame.contentWindow) return;
+  frame.contentWindow.postMessage({ type: 'aamemoho:photogenesis-start' }, '*');
+}
+
 addEventListener('message', (event) => {
   if (event.source !== frame.contentWindow) return;
   const data = event.data;
+  if (data?.type === 'aamemoho:cartridge-ready' && data.cartridge === 'photogenesis') {
+    if (launchGestureUsed) sendCartridgeStart();
+    return;
+  }
+  if (data?.type === 'aamemoho:intro-status' && data.cartridge === 'photogenesis') {
+    document.documentElement.dataset.photogenesisIntro = data.status;
+    return;
+  }
   if (!data || !validSaveKey(data.key)) return;
 
   if (data.type === 'aamemoho:save-load') {
@@ -181,7 +198,10 @@ async function boot() {
     credit.textContent = item.credits || '';
     configurePresentation(item);
 
-    frame.addEventListener('load', () => { message.hidden = true; }, { once: true });
+    frame.addEventListener('load', () => {
+      message.hidden = true;
+      if (launchGestureUsed) sendCartridgeStart();
+    }, { once: true });
     frame.src = item.entry;
     setTimeout(() => {
       if (!message.hidden) message.textContent = '조금 오래 걸리고 있습니다. 연결과 WebGL을 확인하는 중…';
