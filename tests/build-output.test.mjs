@@ -55,7 +55,8 @@ test('production build contains the irreversible-choice ledger graft without los
   const cartridge = await text('dist/cartridges/crt-2026-0725-a/cartridge.js');
   const sphere = catalog.items.find((item) => item.id === 'sphere');
 
-  assert.equal(catalog.items.length, 6);
+  assert.equal(catalog.items.length, 5);
+  assert.equal(catalog.items.find((item) => item.id === 'wave-striker-chain-rush'), undefined);
   assert.deepEqual(sphere.requires, { spent: ['crt-2026-0725-a'] });
   assert.equal(catalog.items[1].id, 'field-log-01');
   assert.equal(catalog.items[2].id, 'sphere');

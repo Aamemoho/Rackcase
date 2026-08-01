@@ -97,9 +97,9 @@ test('Cloudflare _headers uses valid route and header lines', async () => {
   }
 });
 
-test('catalog preserves the original works and includes Wave Striker and Photogenesis', async () => {
+test('catalog removes Wave Striker from the rack while preserving the other public works', async () => {
   const catalog = JSON.parse(await readFile(path.join(root, 'public/data/catalog.json'), 'utf8'));
-  assert.equal(catalog.items.length, 6);
+  assert.equal(catalog.items.length, 5);
   assert.ok(catalog.items.some((item) => item.id === 'crt-2026-0725-a'));
   assert.ok(catalog.items.some((item) => item.id === 'sphere'));
   const media = catalog.items.find((item) => item.id === 'field-log-01');
@@ -109,10 +109,7 @@ test('catalog preserves the original works and includes Wave Striker and Photoge
   const glowlog = catalog.items.find((item) => item.id === 'glowlog');
   assert.equal(glowlog.kind, 'app');
   assert.equal(glowlog.href, '/glowlog/');
-  const wave = catalog.items.find((item) => item.id === 'wave-striker-chain-rush');
-  assert.equal(wave.kind, 'cartridge');
-  assert.equal(wave.entry, '/cartridges/wave-striker-chain-rush/index.html');
-  assert.equal(wave.href, '/play.html?id=wave-striker-chain-rush');
+  assert.equal(catalog.items.find((item) => item.id === 'wave-striker-chain-rush'), undefined);
   const photogenesis = catalog.items.find((item) => item.id === 'photogenesis');
   assert.equal(photogenesis.kind, 'cartridge');
   assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html?v=20260801-afterimage-rhythm');
@@ -121,8 +118,7 @@ test('catalog preserves the original works and includes Wave Striker and Photoge
   assert.equal(photogenesis.presentation.mode, 'immersive-landscape');
   assert.equal(photogenesis.presentation.orientation, 'landscape');
   assert.equal(catalog.items[0].id, 'crt-2026-0725-a');
-  assert.equal(catalog.items[4].id, 'wave-striker-chain-rush');
-  assert.equal(catalog.items[5].id, 'photogenesis');
+  assert.equal(catalog.items[4].id, 'photogenesis');
 });
 
 test('Photogenesis is self-contained and preserves the supplied afterimage opening and shutter takes', async () => {
