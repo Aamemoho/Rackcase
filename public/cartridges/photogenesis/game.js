@@ -609,6 +609,10 @@ function playShutterTake(take){
   clickBurst(ctx,t+take.releaseAt,0.035,0.075,760);
 }
 function playIdleBreath(){/* 권리 미확인 음성 대신 시각적 입김만 유지 */}
+function shutterBlink(){
+  const f=document.getElementById('shuttercurtain');if(!f)return;
+  f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+}
 
 // ---------- 카메라 모드 ----------
 const vf=document.getElementById('vf'),grainEl=document.getElementById('grain'),
@@ -750,6 +754,7 @@ function shutter(){
   handFilms.push(filmRec);
   if(mode==='develop')post({type:'reserve',cells:cellRefs,id:myId,name:myName,ts:now});
   if(mapOpen)renderMap();
+  scheduleSave();
   const take=nextShutterTake();
   cameraBusy=true;
   playShutterTake(take);
@@ -766,6 +771,7 @@ function shutter(){
     else if(firstShot){firstShot=false;showSub(mode==='develop'?'관측되었다 — 아직 현실은 아니다':'이미 열린 장소를 다시 노출했다');}
     else showSub(mode==='develop'?(cellRefs.length+'칸 노출 — 미현상'):(cellRefs.length+'칸 재노출 — 인화하면 색이 깊어진다'));
     updateHud();
+    scheduleSave();
   },Math.max(0,take.captureAt*1000));
   setTimeout(()=>{cameraBusy=false;},Math.max(take.releaseAt*1000,take.captureAt*1000+160));
   updateHud();
@@ -798,6 +804,7 @@ function darkroomTick(now){
       handFilms.length=0;
       showSub('인화 시작 — '+queue.length+'장 대기');
     }
+    scheduleSave();
   }
   wasInDark=inDark;
   // 순차 현상
@@ -829,6 +836,7 @@ function darkroomTick(now){
         if(lostN)showSub('겹친 '+lostN+'칸은 이미 다른 탐사자의 세계다');
       }
       completeStationDevelopment(q);
+      scheduleSave();
     }
   }
   updateHud(now);
@@ -858,10 +866,143 @@ if(bc)bc.onmessage=ev=>{
       while(c.state==='fixed'&&c.clarity<(cr.clarity||1)){if(!sharpenCell(cr.cx,cr.cz,m.img))break;n++;}}
     if(n){showSub('다른 탐사자의 재노출이 세계를 선명하게 했다');if(mapOpen)renderMap();}
   }
+  scheduleSave();
 };
 
+// ---------- 이어하기 저장 ----------
+// 랙의 sandbox iframe에서는 localStorage가 막히므로 부모 play.js가 저장을 대행한다.
+// 직접 실행할 때에는 같은 스키마를 이 문서의 localStorage에 쓴다.
+const SAVE_VERSION=1,SAVE_KEY='photogenesis-0f1-save-v1-'+SEED;
+let saveLoaded=false,saveTimer=null,lastSaveAt=0,saveNoticeShown=false;
+function savePhotoRef(img,photos,index,includePhotos){
+  if(!includePhotos||!img)return null;
+  if(index.has(img))return index.get(img);
+  const ref=photos.length;photos.push(img);index.set(img,ref);return ref;
+}
+function saveFilmRecord(f,photos,index,includePhotos,isQueue,queueIndex,now){
+  const remainingMs=isQueue
+    ?Math.max(160,(f.startT&&queueIndex===0)?f.dur-(now-f.startT):(f.dur||160))
+    :null;
+  return{cells:(f.cells||[]).map(cr=>({cx:cr.cx,cz:cr.cz})),imgRef:savePhotoRef(f.img,photos,index,includePhotos),
+    dist:Number(f.dist)||0,ts:Number(f.ts)||Date.now(),mode:f.mode==='reinforce'?'reinforce':'develop',
+    station:Boolean(f.station),pose:f.pose||null,remainingMs};
+}
+function buildSavePayload(includePhotos){
+  const photos=[],photoIndex=new Map(),world=[];
+  for(let cx=0;cx<GRID;cx++)for(let cz=0;cz<GRID;cz++){
+    const c=cells[cx][cz];
+    if(c.state==='void')continue;
+    world.push({cx,cz,state:c.state,by:c.by||null,clarity:c.clarity||0,
+      photoRef:savePhotoRef(c.photo,photos,photoIndex,includePhotos),
+      developedPhotoRef:savePhotoRef(c.developedPhoto,photos,photoIndex,includePhotos),
+      stationPhoto:Boolean(c.stationPhoto)});
+  }
+  const now=performance.now();
+  return{version:SAVE_VERSION,seed:SEED,savedAt:Date.now(),photos,
+    player:{x:player.x,z:player.z,yaw:player.yaw,pitch:player.pitch},
+    filmMax:FILM_MAX,film,firstShot,shutterIndex,world,
+    handFilms:handFilms.map(f=>saveFilmRecord(f,photos,photoIndex,includePhotos,false,0,now)),
+    queue:queue.map((f,i)=>saveFilmRecord(f,photos,photoIndex,includePhotos,true,i,now)),
+    station:{shot:stationLoop.shot,developed:stationLoop.developed,pinned:stationLoop.pinned,
+      rewarded:stationLoop.rewarded,photoCell:stationLoop.photoCell,
+      beforeRef:savePhotoRef(stationLoop.before,photos,photoIndex,includePhotos),
+      developedRef:savePhotoRef(stationLoop.developedImg,photos,photoIndex,includePhotos)},
+    specimens:SPECIMENS.filter(sp=>sp.confirmed).map(sp=>sp.id)};
+}
+function loadPhoto(ref,photos){return Number.isInteger(ref)&&typeof photos[ref]==='string'?photos[ref]:null;}
+function loadFilmRecord(saved,photos,isQueue){
+  if(!saved||!Array.isArray(saved.cells))return null;
+  const rec={cells:saved.cells.filter(cr=>Number.isInteger(cr.cx)&&Number.isInteger(cr.cz)&&cr.cx>=0&&cr.cx<GRID&&cr.cz>=0&&cr.cz<GRID)
+      .map(cr=>({cx:cr.cx,cz:cr.cz})),
+    img:loadPhoto(saved.imgRef,photos),dist:Number(saved.dist)||0,ts:Number(saved.ts)||Date.now(),
+    mode:saved.mode==='reinforce'?'reinforce':'develop',station:Boolean(saved.station),pose:saved.pose||null};
+  if(isQueue){rec.dur=Math.max(160,Number(saved.remainingMs)||160);rec.startT=0;}
+  return rec.cells.length?rec:null;
+}
+function applySavePayload(saved){
+  if(!saved||saved.version!==SAVE_VERSION||saved.seed!==SEED||!Array.isArray(saved.world))return false;
+  const photos=Array.isArray(saved.photos)?saved.photos:[];
+  for(const rec of saved.world){
+    if(!Number.isInteger(rec.cx)||!Number.isInteger(rec.cz)||rec.cx<0||rec.cx>=GRID||rec.cz<0||rec.cz>=GRID)continue;
+    const c=cells[rec.cx][rec.cz],photo=loadPhoto(rec.photoRef,photos);
+    if(rec.state==='fixed'){
+      if(c.state!=='fixed')fixCell(rec.cx,rec.cz,rec.by||myName,myId,false,photo);
+      c.by=rec.by||c.by||myName;if(photo)c.photo=photo;
+      c.developedPhoto=loadPhoto(rec.developedPhotoRef,photos);c.stationPhoto=Boolean(rec.stationPhoto);
+      while(c.clarity<clamp(Number(rec.clarity)||0,0,3))if(!sharpenCell(rec.cx,rec.cz,photo))break;
+    }else if(rec.state==='developing'&&c.state!=='fixed'){
+      c.state='developing';c.reservedBy=myId;c.reservedTs=Date.now();addPulse(rec.cx,rec.cz);
+    }
+  }
+  const station=saved.station||{};
+  stationLoop.shot=Boolean(station.shot);stationLoop.developed=Boolean(station.developed);
+  stationLoop.pinned=Boolean(station.pinned);stationLoop.rewarded=Boolean(station.rewarded);
+  stationLoop.photoCell=station.photoCell||null;stationLoop.before=loadPhoto(station.beforeRef,photos);
+  stationLoop.developedImg=loadPhoto(station.developedRef,photos);
+  if(stationLoop.detail)stationLoop.detail.visible=stationLoop.developed;
+  if(stationLoop.developed){
+    const sc=cellAt(STATION_X,STATION_Z),c=cells[sc.cx][sc.cz];
+    c.photo=stationLoop.before||c.photo;c.developedPhoto=stationLoop.developedImg||c.photo;c.stationPhoto=true;
+  }
+  const confirmed=new Set(Array.isArray(saved.specimens)?saved.specimens:[]);specDone=0;
+  for(const sp of SPECIMENS){sp.confirmed=confirmed.has(sp.id);if(sp.confirmed)specDone++;
+    if(sp.mark&&sp.confirmed)sp.mark.material.opacity=0;}
+  FILM_MAX=Math.max(6,Number(saved.filmMax)||6,stationLoop.rewarded?7:6);
+  film=clamp(Number(saved.film)||0,0,FILM_MAX);
+  firstShot=typeof saved.firstShot==='boolean'?saved.firstShot:firstShot;
+  shutterIndex=Math.max(0,Number(saved.shutterIndex)||0);
+  handFilms.length=0;for(const f of Array.isArray(saved.handFilms)?saved.handFilms:[]){const rec=loadFilmRecord(f,photos,false);if(rec)handFilms.push(rec);}
+  queue.length=0;for(const f of Array.isArray(saved.queue)?saved.queue:[]){const rec=loadFilmRecord(f,photos,true);if(rec)queue.push(rec);}
+  const p=saved.player||{};
+  if([p.x,p.z,p.yaw,p.pitch].every(Number.isFinite)&&canStand(p.x,p.z)){
+    player.x=p.x;player.z=p.z;player.yaw=p.yaw;player.pitch=clamp(p.pitch,-1.32,1.32);camY=groundH(p.x,p.z)+player.h;
+  }
+  wasInDark=false;saveLoaded=true;lastSaveAt=performance.now();updateHud();
+  if(mapOpen)renderMap();
+  showSub('이전 탐사를 이어 불러왔다');
+  return true;
+}
+function writeSaveNow(){
+  if(!saveLoaded)return;
+  clearTimeout(saveTimer);saveTimer=null;
+  const payload=buildSavePayload(true),compactPayload=buildSavePayload(false);
+  if(window.parent!==window){
+    window.parent.postMessage({type:'aamemoho:save-write',key:SAVE_KEY,payload,compactPayload},'*');
+  }else{
+    try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}
+    catch(e){try{localStorage.setItem(SAVE_KEY,JSON.stringify(compactPayload));
+      if(!saveNoticeShown){saveNoticeShown=true;showSub('사진 이미지는 제외하고 진행 상태만 저장했다');}}
+      catch(e2){if(!saveNoticeShown){saveNoticeShown=true;showSub('이 브라우저에서는 진행을 저장할 수 없다');}}}
+  }
+  lastSaveAt=performance.now();
+}
+function scheduleSave(delay){
+  if(!saveLoaded)return;clearTimeout(saveTimer);saveTimer=setTimeout(writeSaveNow,delay||180);
+}
+function requestStoredSave(){
+  addEventListener('message',ev=>{
+    if(ev.source!==window.parent)return;const data=ev.data;
+    if(!data||data.key!==SAVE_KEY)return;
+    if(data.type==='aamemoho:save-data'&&!saveLoaded){
+      if(!applySavePayload(data.payload))saveLoaded=true;
+    }else if(data.type==='aamemoho:save-status'&&data.compact&&!saveNoticeShown){
+      saveNoticeShown=true;showSub('사진 이미지는 제외하고 진행 상태만 저장했다');
+    }
+  });
+  if(window.parent!==window){
+    window.parent.postMessage({type:'aamemoho:save-load',key:SAVE_KEY},'*');
+    setTimeout(()=>{if(!saveLoaded)saveLoaded=true;},1500);
+  }else{
+    try{const raw=localStorage.getItem(SAVE_KEY);if(!applySavePayload(raw?JSON.parse(raw):null))saveLoaded=true;}
+    catch(e){saveLoaded=true;}
+  }
+}
+addEventListener('pagehide',writeSaveNow);
+addEventListener('visibilitychange',()=>{if(document.hidden)writeSaveNow();});
+window.__photogenesisDebug={saveKey:SAVE_KEY,saveNow:writeSaveNow,snapshot:()=>buildSavePayload(false),restore:applySavePayload};
+
 // ---------- 표본 확인 ② ----------
-// 도감 진행은 세계가 아니라 탐사자의 것 — 확인은 이 탭에만 남는다 (열린 결정, 지금은 로컬).
+// 도감 진행은 세계가 아니라 탐사자의 것 — 확인 상태는 이 브라우저의 이어하기 저장에 남는다.
 const specPanel=document.getElementById('specPanel'),
       promptEl=document.getElementById('prompt'),
       btnConfirm=document.getElementById('btnConfirm');
@@ -888,6 +1029,7 @@ function tryConfirm(){
   }
   openSpecCard(sp);
   updateHud();
+  scheduleSave();
 }
 function openSpecCard(sp){
   specOpen=true;specPanel.classList.add('on');
@@ -1004,6 +1146,7 @@ photoPin.addEventListener('click',()=>{
   stationLoop.pinned=true;photoPin.classList.remove('on');
   showSub('사진판에 핀을 꽂았다 — 관측소 중앙 창문으로 돌아가자');
   if(mapOpen)renderMap();
+  scheduleSave();
   setTimeout(()=>photoPanel.classList.remove('on'),320);
 });
 document.getElementById('photoClose').addEventListener('click',()=>photoPanel.classList.remove('on'));
@@ -1112,6 +1255,7 @@ function loop(now){
     else blocked=true;
     if(blocked)pushVeil(now);
   }
+  if(moving&&saveLoaded&&now-lastSaveAt>4000)writeSaveNow();
   // 경계의 재: 밀 때 차오르고, 물러나면 가라앉는다
   veilT=Math.max(0,veilT-dt);
   edgeVeil.style.opacity=veilT>0?String(0.5+0.4*Math.sin(now*0.02)):'0';
@@ -1184,6 +1328,7 @@ function loop(now){
   darkroomTick(now);
   renderer.render(scene,camera);
 }
+requestStoredSave();
 requestAnimationFrame(loop);
 
 addEventListener('resize',()=>{

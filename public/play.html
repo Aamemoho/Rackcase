@@ -120,7 +120,7 @@
       .fullscreen-control { min-height: 44px; }
     }
   </style>
-  <script type="module" src="./js/play.js?v=20260801-landscape"></script>
+  <script type="module" src="./js/play.js?v=20260801-continuity"></script>
 </head>
 <body>
   <header class="bar">
@@ -138,8 +138,8 @@
   <div class="gate" id="launch" hidden>
     <div class="gate-card">
       <p class="gate-kicker">PHOTOGENESIS · LANDSCAPE</p>
-      <h2>가로 전체화면으로 시작</h2>
-      <p>주소창과 세로 압축을 피하고, 양쪽 조작 영역을 모두 보이게 합니다.</p>
+      <h2 id="launchTitle">가로 전체화면으로 시작</h2>
+      <p id="launchCopy">주소창과 세로 압축을 피하고, 양쪽 조작 영역을 모두 보이게 합니다.</p>
       <button class="gate-button" id="launchButton" type="button">가로 전체화면 시작</button>
     </div>
   </div>
