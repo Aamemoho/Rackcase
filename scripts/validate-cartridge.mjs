@@ -112,7 +112,8 @@ export async function validateCartridge(inputDir) {
     ['websocket', /\bWebSocket\s*\(/, 'undeclared-websocket'],
     ['camera', /\bgetUserMedia\s*\(/, 'undeclared-camera'],
     ['geolocation', /\bnavigator\.geolocation\b/, 'undeclared-geolocation'],
-    ['form-submit', /<form\b|\.submit\s*\(/i, 'undeclared-form-submit']
+    ['form-submit', /<form\b|\.submit\s*\(/i, 'undeclared-form-submit'],
+    ['parent-bridge', /\b(?:window\.)?(?:top|parent)\b/, 'undeclared-parent-bridge']
   ];
   for (const source of scanSources) {
     for (const [capability, regex, code] of checks) {
@@ -122,7 +123,6 @@ export async function validateCartridge(inputDir) {
   const hardBlocks = [
     [/\bdocument\.cookie\b/, 'cookie-access'],
     [/\b(?:eval|Function)\s*\(/, 'dynamic-code'],
-    [/\b(?:window\.)?(?:top|parent)\b/, 'parent-access'],
     [/file:\/\//i, 'file-url']
   ];
   for (const source of scanSources) {

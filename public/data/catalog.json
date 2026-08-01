@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "generatedAt": "2026-07-30T09:49:57.243Z",
+  "version": 2,
+  "generatedAt": "2026-08-01T00:00:00Z",
   "items": [
     {
       "id": "crt-2026-0725-a",
@@ -12,20 +12,8 @@
       "credits": "AI 생성 도구를 활용해 제작했습니다. 콘셉트·연출·선별·편집: aamemoho.",
       "accent": "#00d9f4",
       "order": 10,
-      "entry": "/cartridges/crt-2026-0725-a/index.html",
+      "entry": "/cartridges/crt-2026-0725-a/index.html?v=20260801-ledger",
       "href": "/play.html?id=crt-2026-0725-a"
-    },
-    {
-      "id": "sphere",
-      "kind": "external",
-      "title": "침식의 길",
-      "subtitle": "걷고, 흔적을 남기고, 다른 빛을 스친다.",
-      "status": "live",
-      "aiAssisted": true,
-      "credits": "AI-assisted development; direction and final selection by aamemoho.",
-      "accent": "#d8e8f0",
-      "order": 20,
-      "href": "https://sphere.aamemoho.com"
     },
     {
       "id": "field-log-01",
@@ -36,9 +24,38 @@
       "aiAssisted": true,
       "credits": "AI 생성 도구 활용 · 콘셉트, 연출, 선별, 편집: aamemoho.",
       "accent": "#c8b690",
-      "order": 30,
+      "order": 20,
       "poster": "/media/field-log-01/poster.webp",
       "href": "/media/field-log-01/"
+    },
+    {
+      "id": "sphere",
+      "kind": "external",
+      "title": "침식의 길",
+      "subtitle": "걷고, 흔적을 남기고, 다른 빛을 스친다.",
+      "status": "live",
+      "aiAssisted": true,
+      "credits": "AI-assisted development; direction and final selection by aamemoho.",
+      "accent": "#d8e8f0",
+      "order": 30,
+      "href": "https://sphere.aamemoho.com",
+      "requires": {
+        "spent": ["crt-2026-0725-a"]
+      },
+      "locked": {
+        "title": "아직 밟지 않은 길",
+        "subtitle": "앞선 슬롯에서 선택을 지불해야 열립니다."
+      },
+      "carry": [
+        {
+          "from": "crt-2026-0725-a",
+          "byChoice": {
+            "A": { "subtitle": "손이 기억한 것을 들고 걷는다.", "accent": "#00d9f4" },
+            "B": { "subtitle": "받은 표식을 따라 걷는다.", "accent": "#ffd700" },
+            "C": { "subtitle": "여전히 도착하지 않은 채로 걷는다.", "accent": "#ff8f8f" }
+          }
+        }
+      ]
     },
     {
       "id": "glowlog",

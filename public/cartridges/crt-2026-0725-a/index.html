@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0a0c10">
   <title>CRT-2026-0725-A : Vertical Slice</title>
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=20260801-ledger">
   <script src="./vendor/three-r128.min.js"></script>
-  <script defer src="./cartridge.js"></script>
+  <script defer src="./cartridge.js?v=20260801-ledger"></script>
 </head>
 <body>
   <div id="canvas-container" aria-hidden="true"></div>
   <main id="ui-layer">
     <div class="scene-title">Scene 1 — 목적지 없는 길목</div>
     <p class="scene-desc">표지판은 세 방향을 가리키지만 글자가 반쯤 지워져 있다. 바람이 건조하고, 주머니 안에는 아무 감각도 없는 것 같다.</p>
+    <p class="seal-notice" id="seal-notice">선택은 한 번뿐입니다.</p>
     <div class="choices-group" aria-label="행동 선택">
       <button class="choice-btn" type="button" data-choice="A">1. “주머니를 다시 확인한다.”</button>
       <button class="choice-btn" type="button" data-choice="B">2. “표지판의 지워진 글자를 손으로 더듬는다.”</button>

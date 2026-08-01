@@ -1,3 +1,5 @@
+import { readLedger, spend, choiceOf } from './ledger.js?v=20260801-ledger';
+
 const title = document.querySelector('#title');
 const status = document.querySelector('#status');
 const frame = document.querySelector('#frame');
@@ -137,6 +139,21 @@ function sendCartridgeStart() {
 addEventListener('message', (event) => {
   if (event.source !== frame.contentWindow) return;
   const data = event.data;
+
+  if (data && typeof data === 'object' && data.id === currentItemId) {
+    if (data.type === 'rack:hello') {
+      const choice = choiceOf(readLedger(), currentItemId);
+      frame.contentWindow.postMessage({ type: 'rack:state', id: currentItemId, choice }, '*');
+      return;
+    }
+    if (data.type === 'rack:spend' && typeof data.choice === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(data.choice)) {
+      const ledger = spend(currentItemId, data.choice);
+      const choice = choiceOf(ledger, currentItemId);
+      frame.contentWindow.postMessage({ type: 'rack:ack', id: currentItemId, choice }, '*');
+      return;
+    }
+  }
+
   if (data?.type === 'aamemoho:cartridge-ready' && data.cartridge === 'photogenesis') {
     if (launchGestureUsed) sendCartridgeStart();
     return;

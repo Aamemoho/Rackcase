@@ -15,12 +15,12 @@ body {
   scrollbar-width: thin;
 }
 .scene-title { margin-bottom: 8px; color: #7a8b9e; font-size: .85rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
-.scene-desc { margin-bottom: 18px; color: #d1d9e2; font-size: .98rem; line-height: 1.5; }
+.scene-desc { margin-bottom: 10px; color: #d1d9e2; font-size: .98rem; line-height: 1.5; }
 .choices-group { display: flex; flex-direction: column; gap: 8px; }
 .choice-btn {
   width: 100%; min-height: 46px; padding: 12px 16px; cursor: pointer;
   background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .15); border-radius: 8px;
-  color: #d1d9e2; font-size: .9rem; text-align: left; transition: transform .25s ease, background .25s ease, border-color .25s ease;
+  color: #d1d9e2; font-size: .9rem; text-align: left; transition: transform .25s ease, background .25s ease, border-color .25s ease, opacity .5s ease, color .5s ease;
 }
 .choice-btn:hover, .choice-btn:focus-visible { background: rgba(0, 229, 255, .12); border-color: #00e5ff; color: #fff; transform: translateY(-1px); outline: none; }
 .choice-btn[aria-pressed="true"] { border-color: currentColor; background: rgba(255,255,255,.1); }
@@ -32,5 +32,23 @@ body {
 .credit { margin-top: 14px; color: #687480; font: 9px/1.4 ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; }
 #fallback { position: fixed; inset: 12px 12px auto; z-index: 12; padding: 10px; background: #321b22; color: #ffc2cb; border: 1px solid #874354; font-size: 12px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-height: 620px) { #ui-layer { width: min(94%, 620px); bottom: max(8px, env(safe-area-inset-bottom)); padding: 16px; } .scene-desc { margin-bottom: 12px; } .choice-btn { min-height: 42px; padding-block: 9px; } }
+
+/* ── 봉인 상태 ───────────────────────────────────────────────
+   고른 길은 남고, 고르지 않은 둘은 자리만 남긴 채 닫힌다.
+   지워지지 않는 이유: 없었던 일이 아니라 지나간 일이기 때문. */
+.seal-notice {
+  margin-bottom: 14px; color: #687480;
+  font: 10px/1.5 ui-monospace, monospace; letter-spacing: .06em;
+}
+.choice-btn:disabled { cursor: default; transform: none; }
+.choice-btn:disabled:hover, .choice-btn:disabled:focus-visible { transform: none; }
+.choice-btn.is-taken,
+.choice-btn.is-taken:hover { background: rgba(255,255,255,.1); border-color: currentColor; color: #fff; }
+.choice-btn.is-sealed,
+.choice-btn.is-sealed:hover {
+  background: transparent; border-color: rgba(255,255,255,.07);
+  color: #8b97a4; opacity: .3;
+}
+
+@media (max-height: 620px) { #ui-layer { width: min(94%, 620px); bottom: max(8px, env(safe-area-inset-bottom)); padding: 16px; } .scene-desc { margin-bottom: 8px; } .seal-notice { margin-bottom: 10px; } .choice-btn { min-height: 42px; padding-block: 9px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; } }

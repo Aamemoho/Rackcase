@@ -1,3 +1,5 @@
+import { readLedger, isUnlocked, resolveCarry, lockedView, see } from './ledger.js?v=20260801-ledger';
+
 const grid = document.querySelector('#card-grid');
 const status = document.querySelector('#rack-status');
 
@@ -36,13 +38,20 @@ function enterLabel(item) {
   return '카트리지 삽입 →';
 }
 
-function card(item, index) {
-  const link = document.createElement('a');
-  link.className = 'card';
-  link.href = item.href;
-  link.dataset.kind = item.kind;
-  link.style.setProperty('--accent', item.accent || '#9bb8c6');
-  if (item.kind === 'external') link.rel = 'external';
+function card(item, index, { locked = false, spent = false } = {}) {
+  // 잠긴 슬롯은 링크가 아니라 자리다. 누를 수 없어야 누를 수 없다는 게 전달된다.
+  const node = document.createElement(locked ? 'div' : 'a');
+  node.className = locked ? 'card is-locked' : 'card';
+  node.dataset.kind = item.kind;
+  node.style.setProperty('--accent', item.accent || '#9bb8c6');
+
+  if (locked) {
+    node.setAttribute('aria-disabled', 'true');
+  } else {
+    node.href = item.href;
+    if (item.kind === 'external') node.rel = 'external';
+    node.addEventListener('click', () => see(item.id));
+  }
 
   const top = document.createElement('div');
   top.className = 'card-top';
@@ -51,7 +60,7 @@ function card(item, index) {
   n.textContent = `SLOT ${String(index + 1).padStart(2, '0')}`;
   const kind = document.createElement('span');
   kind.className = 'card-slot';
-  kind.textContent = kindLabel(item);
+  kind.textContent = locked ? 'SEALED' : kindLabel(item);
   top.append(n, kind);
 
   const body = document.createElement('div');
@@ -67,14 +76,19 @@ function card(item, index) {
   foot.className = 'card-foot';
   foot.append(tag(item.status));
   if (item.aiAssisted) foot.append(tag('AI-assisted'));
+  if (spent) {
+    const marker = tag('지불됨');
+    marker.classList.add('spent-tag');
+    foot.append(marker);
+  }
   const enter = document.createElement('span');
   enter.className = 'enter';
-  enter.textContent = enterLabel(item);
+  enter.textContent = locked ? '잠김' : enterLabel(item);
   foot.append(enter);
 
-  link.append(top, cartridgeWindow(item), body, foot);
-  link.setAttribute('aria-label', `${item.title}: ${item.subtitle}`);
-  return link;
+  node.append(top, cartridgeWindow(item), body, foot);
+  node.setAttribute('aria-label', `${item.title}: ${item.subtitle}`);
+  return node;
 }
 
 function fallbackItem() {
@@ -92,8 +106,23 @@ async function loadRack() {
     const catalog = await response.json();
     const items = Array.isArray(catalog.items) ? catalog.items : [];
     if (items.length === 0) throw new Error('catalog is empty');
-    grid.replaceChildren(...items.map(card));
-    status.textContent = `${String(items.length).padStart(2, '0')} SLOTS · INDEX READY`;
+
+    const ledger = readLedger();
+    let sealedCount = 0;
+
+    const cards = items.map((item, index) => {
+      const unlocked = isUnlocked(item, ledger);
+      if (!unlocked) {
+        sealedCount += 1;
+        return card(lockedView(item), index, { locked: true });
+      }
+      return card(resolveCarry(item, ledger), index, { spent: Boolean(ledger.spent[item.id]) });
+    });
+
+    grid.replaceChildren(...cards);
+    status.textContent = sealedCount > 0
+      ? `${String(items.length).padStart(2, '0')} SLOTS · ${String(sealedCount).padStart(2, '0')} SEALED`
+      : `${String(items.length).padStart(2, '0')} SLOTS · INDEX READY`;
   } catch (error) {
     status.classList.add('error');
     status.textContent = 'INDEX DEGRADED · REMOTE ONLY';
@@ -103,3 +132,6 @@ async function loadRack() {
 }
 
 loadRack();
+
+// 카트리지에서 돌아왔을 때 랙이 옛 상태로 남아 있지 않도록.
+addEventListener('pageshow', (event) => { if (event.persisted) loadRack(); });

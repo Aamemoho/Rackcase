@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCartridge } from '../scripts/validate-cartridge.mjs';
+import { clearLedger, readLedger, spend, isUnlocked, resolveCarry } from '../public/js/ledger.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -56,6 +57,21 @@ test('undeclared network code in a linked local script is rejected', async () =>
     const result = await validateCartridge(dir);
     assert.ok(result.errors.some((e) => e.code === 'undeclared-network'));
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('declared parent bridge is allowed while undeclared parent access is rejected', async () => {
+  const html = '<!doctype html><script>window.parent.postMessage({type:"hello"}, "*")</script>';
+  const undeclared = await makeFixture(validMeta, html);
+  const declared = await makeFixture({ ...validMeta, capabilities: ['parent-bridge'] }, html);
+  try {
+    const rejected = await validateCartridge(undeclared);
+    const accepted = await validateCartridge(declared);
+    assert.ok(rejected.errors.some((e) => e.code === 'undeclared-parent-bridge'));
+    assert.ok(!accepted.errors.some((e) => e.code === 'undeclared-parent-bridge'));
+  } finally {
+    await rm(undeclared, { recursive: true, force: true });
+    await rm(declared, { recursive: true, force: true });
+  }
 });
 
 test('path traversal references are rejected', async () => {
@@ -157,6 +173,53 @@ test('Photogenesis is self-contained and preserves the supplied afterimage openi
   assert.match(styles, /#awaken\.open \.lid\.top/);
   assert.match(credits, /e199831cfc09e42c9058597e94bca4bc3f4a2c474f264cf2e34f1c92b9265102/);
   assert.match(license, /MIT License/);
+});
+
+test('rack ledger keeps the first irreversible choice and resolves lock/carry separately', () => {
+  clearLedger();
+  const source = 'crt-2026-0725-a';
+  const target = {
+    requires: { spent: [source] },
+    subtitle: 'base',
+    accent: '#base',
+    carry: [{ from: source, byChoice: {
+      A: { subtitle: 'carried A', accent: '#00d9f4' },
+      B: { subtitle: 'carried B', accent: '#ffd700' }
+    } }]
+  };
+
+  assert.equal(isUnlocked(target, readLedger()), false);
+  spend(source, 'A');
+  spend(source, 'B');
+  const ledger = readLedger();
+  assert.equal(ledger.spent[source].choice, 'A');
+  assert.equal(isUnlocked(target, ledger), true);
+  assert.deepEqual(
+    { subtitle: resolveCarry(target, ledger).subtitle, accent: resolveCarry(target, ledger).accent },
+    { subtitle: 'carried A', accent: '#00d9f4' }
+  );
+  clearLedger();
+});
+
+test('rack patch graft preserves modern player features while sealing the first cartridge choice', async () => {
+  const catalog = JSON.parse(await readFile(path.join(root, 'public/data/catalog.json'), 'utf8'));
+  const player = await readFile(path.join(root, 'public/js/play.js'), 'utf8');
+  const hub = await readFile(path.join(root, 'public/js/hub.js'), 'utf8');
+  const cartridge = await readFile(path.join(root, 'public/cartridges/crt-2026-0725-a/cartridge.js'), 'utf8');
+  const cartridgeHtml = await readFile(path.join(root, 'public/cartridges/crt-2026-0725-a/index.html'), 'utf8');
+  const sphere = catalog.items.find((item) => item.id === 'sphere');
+
+  assert.deepEqual(sphere.requires, { spent: ['crt-2026-0725-a'] });
+  assert.equal(sphere.carry[0].from, 'crt-2026-0725-a');
+  assert.match(hub, /isUnlocked/);
+  assert.match(hub, /is-locked/);
+  assert.match(player, /rack:hello/);
+  assert.match(player, /rack:spend/);
+  assert.match(player, /aamemoho:save-write/);
+  assert.match(player, /sendCartridgeStart/);
+  assert.match(cartridge, /rack:ack/);
+  assert.match(cartridge, /rack:spend/);
+  assert.match(cartridgeHtml, /선택은 한 번뿐입니다/);
 });
 
 test('status page exposes the public checkpoint and copy controls', async () => {

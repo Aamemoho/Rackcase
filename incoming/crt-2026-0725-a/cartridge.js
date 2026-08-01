@@ -1,24 +1,86 @@
 (() => {
+  const CARTRIDGE_ID = 'crt-2026-0725-a';
+  const SOLO_KEY = `rack:solo:${CARTRIDGE_ID}`;
+
   const banner = document.querySelector('#result-banner');
   const buttons = [...document.querySelectorAll('[data-choice]')];
   const fallback = document.querySelector('#fallback');
-  const outcomes = {
-    A: { className: 'variant-a', title: 'Variant A — 재발견 인벤토리', quote: '“빈손이 아니었다. 손이 기억하지 못했을 뿐이다.”' },
-    B: { className: 'variant-b', title: 'Variant B — 환대 수신기', quote: '“길 위의 도움은 빚이 아니라 방향 표식일 수 있다.”' },
-    C: { className: 'variant-c', title: 'Variant C — 영원한 경유지', quote: '“너는 도착하지 않기 위해 계속 준비만 했다.”' }
-  };
-  let currentState = 'IDLE';
+  const notice = document.querySelector('#seal-notice');
 
-  function showOutcome(variant) {
+  const outcomes = {
+    A: { className: 'variant-a', title: 'Variant A \u2014 \uc7ac\ubc1c\uacac \uc778\ubca4\ud1a0\ub9ac', quote: '\u201c\ube48\uc190\uc774 \uc544\ub2c8\uc5c8\ub2e4. \uc190\uc774 \uae30\uc5b5\ud558\uc9c0 \ubabb\ud588\uc744 \ubfd0\uc774\ub2e4.\u201d' },
+    B: { className: 'variant-b', title: 'Variant B \u2014 \ud658\ub300 \uc218\uc2e0\uae30', quote: '\u201c\uae38 \uc704\uc758 \ub3c4\uc6c0\uc740 \ube5a\uc774 \uc544\ub2c8\ub77c \ubc29\ud5a5 \ud45c\uc2dd\uc77c \uc218 \uc788\ub2e4.\u201d' },
+    C: { className: 'variant-c', title: 'Variant C \u2014 \uc601\uc6d0\ud55c \uacbd\uc720\uc9c0', quote: '\u201c\ub108\ub294 \ub3c4\ucc29\ud558\uc9c0 \uc54a\uae30 \uc704\ud574 \uacc4\uc18d \uc900\ube44\ub9cc \ud588\ub2e4.\u201d' }
+  };
+
+  const embedded = window.parent !== window;
+
+  const solo = {
+    get() { try { return localStorage.getItem(SOLO_KEY); } catch { return null; } },
+    set(value) { try { localStorage.setItem(SOLO_KEY, value); } catch { /* noop */ } },
+    clear() { try { localStorage.removeItem(SOLO_KEY); } catch { /* noop */ } }
+  };
+
+  if (new URLSearchParams(location.search).has('reset')) {
+    solo.clear();
+    location.replace(location.pathname);
+    return;
+  }
+
+  let currentState = 'IDLE';
+  let sealed = false;
+  let settleNow = null;
+
+  function seal(variant, { restored = false } = {}) {
+    if (sealed || !outcomes[variant]) return;
+    sealed = true;
     currentState = variant;
+
     const outcome = outcomes[variant];
     const strong = document.createElement('strong');
     strong.textContent = outcome.title;
     banner.className = `${outcome.className} visible`;
     banner.replaceChildren(strong, document.createElement('br'), document.createTextNode(outcome.quote));
-    buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.choice === variant)));
+
+    for (const button of buttons) {
+      const taken = button.dataset.choice === variant;
+      button.setAttribute('aria-pressed', String(taken));
+      button.disabled = true;
+      button.classList.add(taken ? 'is-taken' : 'is-sealed');
+    }
+
+    if (notice) notice.textContent = '\uc774 \uc120\ud0dd\uc740 \ub0a8\uc558\uc2b5\ub2c8\ub2e4. \ub2e4\ub978 \ub458\uc740 \uc5f4\ub9ac\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.';
+    if (restored && settleNow) settleNow();
   }
-  buttons.forEach((button) => button.addEventListener('click', () => showOutcome(button.dataset.choice)));
+
+  function choose(variant) {
+    if (sealed || !outcomes[variant]) return;
+    if (embedded) {
+      window.parent.postMessage({ type: 'rack:spend', id: CARTRIDGE_ID, choice: variant }, '*');
+      return;
+    }
+    solo.set(variant);
+    seal(variant);
+  }
+
+  for (const button of buttons) {
+    button.addEventListener('click', () => choose(button.dataset.choice));
+  }
+
+  if (embedded) {
+    addEventListener('message', (event) => {
+      if (event.source !== window.parent) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object' || data.id !== CARTRIDGE_ID) return;
+      if ((data.type === 'rack:state' || data.type === 'rack:ack') && data.choice) {
+        seal(data.choice, { restored: data.type === 'rack:state' });
+      }
+    });
+    window.parent.postMessage({ type: 'rack:hello', id: CARTRIDGE_ID }, '*');
+  } else {
+    const restored = solo.get();
+    if (restored) seal(restored, { restored: true });
+  }
 
   if (!globalThis.THREE) {
     fallback.hidden = false;
@@ -77,6 +139,25 @@
     const fullScale = new THREE.Vector3(1, 1, 1);
     const tinyScale = new THREE.Vector3(.01, .01, .01);
     const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // 다시 찾아온 방문자에게는 결과가 '지금 일어나는 일'이 아니라
+    // '이미 일어난 일'이어야 하므로, 전이 없이 최종 상태로 앉힌다.
+    settleNow = function settle() {
+      if (currentState === 'A' || currentState === 'B') {
+        const color = currentState === 'A' ? 0x00e5ff : 0xffd700;
+        dropMat.opacity = 1;
+        dropMesh.scale.copy(fullScale);
+        dropMat.color.setHex(color);
+        glassMat.color.setHex(color);
+        crackMat.opacity = 0;
+      } else if (currentState === 'C') {
+        crackMat.opacity = .95;
+        dropMat.opacity = 0;
+        dropMesh.scale.copy(tinyScale);
+        glassMat.color.setHex(0xff4b4b);
+      }
+    };
+    if (sealed) settleNow();
 
     function animate(time = 0) {
       requestAnimationFrame(animate);

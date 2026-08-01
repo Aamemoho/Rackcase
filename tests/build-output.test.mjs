@@ -45,6 +45,29 @@ test('GlowLog uses same-origin hashed assets compatible with the rack CSP', asyn
   assert.doesNotMatch(glowlog, /<script[^>]*type="module"[^>]*>\s*[^<]/i);
 });
 
+test('production build contains the irreversible-choice ledger graft without losing current cartridges', async () => {
+  const catalog = JSON.parse(await text('dist/data/catalog.json'));
+  const rack = await text('dist/index.html');
+  const hub = await text('dist/js/hub.js');
+  const ledger = await text('dist/js/ledger.js');
+  const player = await text('dist/js/play.js');
+  const cartridgeHtml = await text('dist/cartridges/crt-2026-0725-a/index.html');
+  const cartridge = await text('dist/cartridges/crt-2026-0725-a/cartridge.js');
+  const sphere = catalog.items.find((item) => item.id === 'sphere');
+
+  assert.equal(catalog.items.length, 6);
+  assert.deepEqual(sphere.requires, { spent: ['crt-2026-0725-a'] });
+  assert.equal(catalog.items[1].id, 'field-log-01');
+  assert.equal(catalog.items[2].id, 'sphere');
+  assert.match(rack, /hub\.js\?v=20260801-ledger/);
+  assert.match(hub, /ledger\.js\?v=20260801-ledger/);
+  assert.match(ledger, /rack:ledger:v1/);
+  assert.match(player, /rack:ack/);
+  assert.match(player, /aamemoho:save-write/);
+  assert.match(cartridgeHtml, /cartridge\.js\?v=20260801-ledger/);
+  assert.match(cartridge, /rack:spend/);
+});
+
 test('production build contains a self-contained Photogenesis cartridge', async () => {
   const catalog = JSON.parse(await text('dist/data/catalog.json'));
   const html = await text('dist/cartridges/photogenesis/index.html');
