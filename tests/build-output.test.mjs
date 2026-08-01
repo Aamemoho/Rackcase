@@ -53,6 +53,7 @@ test('production build contains a self-contained Photogenesis cartridge', async 
   const vendor = await text('dist/cartridges/photogenesis/vendor/three.min.js');
   assert.ok(catalog.items.some((item) => item.id === 'photogenesis'));
   assert.equal(catalog.items.find((item) => item.id === 'photogenesis').presentation.mode, 'immersive-landscape');
+  assert.match(catalog.items.find((item) => item.id === 'photogenesis').entry, /\?v=20260801-landscape$/);
   assert.match(html, /\.\/vendor\/three\.min\.js/);
   assert.doesNotMatch(html + game, /https?:\/\//);
   assert.doesNotMatch(html + game, /\.mp3\b/);
