@@ -73,6 +73,10 @@
       "status": "prototype",
       "aiAssisted": true,
       "credits": "AI 보조 개발 · 콘셉트, 연출, 선별, 편집: aamemoho. Three.js r128: MIT License.",
+      "presentation": {
+        "mode": "immersive-landscape",
+        "orientation": "landscape"
+      },
       "accent": "#8b7cf6",
       "order": 60,
       "entry": "/cartridges/photogenesis/index.html",

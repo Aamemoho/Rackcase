@@ -49,10 +49,14 @@ test('production build contains a self-contained Photogenesis cartridge', async 
   const catalog = JSON.parse(await text('dist/data/catalog.json'));
   const html = await text('dist/cartridges/photogenesis/index.html');
   const game = await text('dist/cartridges/photogenesis/game.js');
+  const player = await text('dist/js/play.js');
   const vendor = await text('dist/cartridges/photogenesis/vendor/three.min.js');
   assert.ok(catalog.items.some((item) => item.id === 'photogenesis'));
+  assert.equal(catalog.items.find((item) => item.id === 'photogenesis').presentation.mode, 'immersive-landscape');
   assert.match(html, /\.\/vendor\/three\.min\.js/);
   assert.doesNotMatch(html + game, /https?:\/\//);
   assert.doesNotMatch(html + game, /\.mp3\b/);
   assert.match(vendor, /SPDX-License-Identifier: MIT/);
+  assert.match(player, /requestFullscreen/);
+  assert.match(player, /orientation\.lock/);
 });

@@ -6,7 +6,119 @@
   <meta name="theme-color" content="#07090c">
   <title>카트리지 로딩 — aamemoho</title>
   <style>
-    *{box-sizing:border-box}html,body{height:100%;margin:0;background:#07090c;color:#e8ecf0;font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{display:grid;grid-template-rows:auto 1fr;overflow:hidden}.bar{min-height:58px;padding:max(10px,env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(255,255,255,.13);background:rgba(8,10,14,.96)}.back{color:#bac4cd;text-decoration:none;font:600 .72rem/1 ui-monospace,monospace;letter-spacing:.08em}.meta{min-width:0;margin-left:auto;text-align:right}.title{margin:0;font:400 1rem/1.2 Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.status{margin:4px 0 0;color:#73808b;font:600 .58rem/1 ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase}.stage{position:relative;min-height:0}.frame{width:100%;height:100%;border:0;background:#0a0c10}.message{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;background:#090b0f;color:#8996a0;z-index:2}.message[hidden]{display:none}.error{color:#ff9e9e}.credit{display:none}@media(max-width:520px){.bar{min-height:54px}.meta{max-width:68vw}.credit{font-size:8px}}
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #07090c; color: #e8ecf0; }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, a { font: inherit; }
+    .bar {
+      min-height: 58px;
+      padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.13);
+      background: rgba(8,10,14,.96);
+    }
+    .back {
+      color: #bac4cd;
+      text-decoration: none;
+      font: 600 .72rem/1 ui-monospace, monospace;
+      letter-spacing: .08em;
+    }
+    .meta { min-width: 0; margin-left: auto; text-align: right; }
+    .title { margin: 0; font: 400 1rem/1.2 Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .status { margin: 4px 0 0; color: #73808b; font: 600 .58rem/1 ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
+    .stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+    .frame { display: block; width: 100%; height: 100%; border: 0; background: #0a0c10; }
+    .message {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+      background: #090b0f;
+      color: #8996a0;
+    }
+    .error { color: #ff9e9e; }
+    .credit { display: none; }
+
+    /* Landscape cartridges use the whole dynamic viewport; the rack bar no longer consumes game height. */
+    body.immersive { grid-template-rows: minmax(0, 1fr); }
+    body.immersive .stage { grid-row: 1; width: 100vw; height: 100vh; height: 100dvh; }
+    body.immersive .bar {
+      display: none;
+    }
+
+    .fullscreen-control {
+      position: fixed;
+      z-index: 7;
+      top: max(8px, env(safe-area-inset-top));
+      right: max(8px, env(safe-area-inset-right));
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 999px;
+      color: #edf2f5;
+      background: rgba(7,9,12,.62);
+      backdrop-filter: blur(7px);
+      cursor: pointer;
+      font: 700 .64rem/1 ui-monospace, monospace;
+      letter-spacing: .08em;
+    }
+    .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding:
+        max(24px, env(safe-area-inset-top))
+        max(24px, env(safe-area-inset-right))
+        max(24px, env(safe-area-inset-bottom))
+        max(24px, env(safe-area-inset-left));
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(139,124,246,.16), transparent 34rem),
+        rgba(5,7,10,.94);
+      backdrop-filter: blur(8px);
+    }
+    .gate-card { width: min(88vw, 390px); }
+    .gate-kicker { margin: 0 0 12px; color: #8b7cf6; font: 700 .64rem/1 ui-monospace, monospace; letter-spacing: .18em; }
+    .gate h2 { margin: 0; font: 400 clamp(1.7rem, 8vw, 2.5rem)/1.08 Georgia, serif; }
+    .gate p { margin: 14px auto 0; color: #9aa6af; font-size: .85rem; line-height: 1.65; word-break: keep-all; }
+    .gate-button {
+      width: 100%;
+      min-height: 52px;
+      margin-top: 24px;
+      border: 1px solid rgba(139,124,246,.8);
+      border-radius: 4px;
+      color: #f4f1ff;
+      background: rgba(89,73,178,.34);
+      cursor: pointer;
+      font: 700 .76rem/1 ui-monospace, monospace;
+      letter-spacing: .08em;
+    }
+    .rotate-icon { display: block; margin: 0 auto 18px; font-size: 3rem; transform: rotate(90deg); }
+    body.orientation-blocked .frame { visibility: hidden; }
+
+    @media (max-width: 520px) {
+      .bar { min-height: 54px; }
+      .meta { max-width: 68vw; }
+      .credit { font-size: 8px; }
+    }
+    @media (pointer: coarse) {
+      .fullscreen-control { min-height: 44px; }
+    }
   </style>
   <script type="module" src="./js/play.js"></script>
 </head>
@@ -17,8 +129,27 @@
   </header>
   <main class="stage">
     <div class="message" id="message">카트리지를 꽂는 중…</div>
-    <iframe class="frame" id="frame" title="인터랙티브 카트리지" sandbox="allow-scripts allow-pointer-lock" allow="fullscreen" referrerpolicy="no-referrer"></iframe>
+    <iframe class="frame" id="frame" title="인터랙티브 카트리지" sandbox="allow-scripts allow-pointer-lock" allow="fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>
     <div class="credit" id="credit"></div>
   </main>
+
+  <button class="fullscreen-control" id="fullscreen" type="button" hidden>전체화면</button>
+
+  <div class="gate" id="launch" hidden>
+    <div class="gate-card">
+      <p class="gate-kicker">PHOTOGENESIS · LANDSCAPE</p>
+      <h2>가로 전체화면으로 시작</h2>
+      <p>주소창과 세로 압축을 피하고, 양쪽 조작 영역을 모두 보이게 합니다.</p>
+      <button class="gate-button" id="launchButton" type="button">가로 전체화면 시작</button>
+    </div>
+  </div>
+
+  <div class="gate" id="rotate" hidden>
+    <div class="gate-card">
+      <span class="rotate-icon" aria-hidden="true">↻</span>
+      <h2>기기를 가로로 돌려주세요</h2>
+      <p>세로 화면에서는 게임을 찌그러뜨리지 않습니다. 가로가 되면 자동으로 이어집니다.</p>
+    </div>
+  </div>
 </body>
 </html>

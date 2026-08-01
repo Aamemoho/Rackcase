@@ -78,6 +78,11 @@
 
   /* 조이스틱 */
   #joy{position:fixed;z-index:15;left:0;bottom:0;width:45%;height:55%;pointer-events:auto;display:none}
+  #joy::before{content:'이동 영역';position:absolute;left:clamp(112px,calc(18vw + env(safe-area-inset-left)),170px);
+           bottom:calc(22px + env(safe-area-inset-bottom));width:82px;height:82px;display:grid;place-items:center;
+           border:1px dashed rgba(38,50,58,.5);border-radius:50%;color:rgba(38,50,58,.62);
+           background:rgba(240,246,248,.08);font-size:9px;letter-spacing:.12em;pointer-events:none}
+  #joy:active::before{opacity:.12}
   #joyBase{position:absolute;width:84px;height:84px;border:1px solid #2b2936;border-radius:50%;
            background:rgba(14,14,18,.35);display:none}
   #joyNub{position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(139,123,184,.5);display:none}

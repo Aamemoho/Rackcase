@@ -102,6 +102,8 @@ test('catalog preserves the original works and includes Wave Striker and Photoge
   assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html');
   assert.equal(photogenesis.href, '/play.html?id=photogenesis');
   assert.equal(photogenesis.aiAssisted, true);
+  assert.equal(photogenesis.presentation.mode, 'immersive-landscape');
+  assert.equal(photogenesis.presentation.orientation, 'landscape');
   assert.equal(catalog.items[0].id, 'crt-2026-0725-a');
   assert.equal(catalog.items[4].id, 'wave-striker-chain-rush');
   assert.equal(catalog.items[5].id, 'photogenesis');
@@ -111,6 +113,7 @@ test('Photogenesis is self-contained and excludes rights-unclear recordings', as
   const base = path.join(root, 'public/cartridges/photogenesis');
   const html = await readFile(path.join(base, 'index.html'), 'utf8');
   const game = await readFile(path.join(base, 'game.js'), 'utf8');
+  const styles = await readFile(path.join(base, 'styles.css'), 'utf8');
   const credits = await readFile(path.join(base, 'CREDITS.md'), 'utf8');
   const license = await readFile(path.join(base, 'LICENSES/THREE-LICENSE.txt'), 'utf8');
   assert.match(html, /src="\.\/vendor\/three\.min\.js"/);
@@ -119,6 +122,7 @@ test('Photogenesis is self-contained and excludes rights-unclear recordings', as
   assert.doesNotMatch(html + game, /\.mp3\b/);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/i);
   assert.match(game, /createOscillator/);
+  assert.match(styles, /이동 영역/);
   assert.match(credits, /exact creator, source URL, and license could not be recovered/i);
   assert.match(license, /MIT License/);
 });

@@ -8,6 +8,10 @@
   "credits": "AI 보조 개발 · 콘셉트, 연출, 선별, 편집: aamemoho. Three.js r128: MIT License.",
   "published": true,
   "capabilities": [],
+  "presentation": {
+    "mode": "immersive-landscape",
+    "orientation": "landscape"
+  },
   "vendorHashes": {
     "vendor/three.min.js": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2"
   },
