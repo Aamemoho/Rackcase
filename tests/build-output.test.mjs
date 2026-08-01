@@ -55,7 +55,7 @@ test('production build contains a self-contained Photogenesis cartridge', async 
   const audio = await readdir(path.join(root, 'dist/cartridges/photogenesis/audio'));
   assert.ok(catalog.items.some((item) => item.id === 'photogenesis'));
   assert.equal(catalog.items.find((item) => item.id === 'photogenesis').presentation.mode, 'immersive-landscape');
-  assert.match(catalog.items.find((item) => item.id === 'photogenesis').entry, /\?v=20260801-afterimage$/);
+  assert.match(catalog.items.find((item) => item.id === 'photogenesis').entry, /\?v=20260801-afterimage-rhythm$/);
   assert.match(html, /\.\/vendor\/three\.min\.js/);
   assert.doesNotMatch(html + game, /https?:\/\//);
   assert.equal(audio.filter((name) => name.endsWith('.mp3')).length, 8);

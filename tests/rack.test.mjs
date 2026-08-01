@@ -99,7 +99,7 @@ test('catalog preserves the original works and includes Wave Striker and Photoge
   assert.equal(wave.href, '/play.html?id=wave-striker-chain-rush');
   const photogenesis = catalog.items.find((item) => item.id === 'photogenesis');
   assert.equal(photogenesis.kind, 'cartridge');
-  assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html?v=20260801-afterimage');
+  assert.equal(photogenesis.entry, '/cartridges/photogenesis/index.html?v=20260801-afterimage-rhythm');
   assert.equal(photogenesis.href, '/play.html?id=photogenesis');
   assert.equal(photogenesis.aiAssisted, true);
   assert.equal(photogenesis.presentation.mode, 'immersive-landscape');
@@ -121,7 +121,7 @@ test('Photogenesis is self-contained and preserves the supplied afterimage openi
   const audio = await readdir(path.join(base, 'audio'));
   assert.match(html, /src="\.\/vendor\/three\.min\.js"/);
   assert.match(html, /styles\.css\?v=20260801-afterimage/);
-  assert.match(html, /src="\.\/game\.js\?v=20260801-afterimage"/);
+  assert.match(html, /src="\.\/game\.js\?v=20260801-afterimage-rhythm"/);
   assert.match(html, /id="gameStart"/);
   assert.match(html, /id="awaken"/);
   assert.doesNotMatch(html + game, /https?:\/\//);
